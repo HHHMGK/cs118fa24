@@ -305,28 +305,20 @@ def betterEvaluationFunction(currentGameState: GameState):
 
     DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    # ghostScareTimes = [ghostState.scaredTimer for ghostState in currentGameState.getGhostStates()]
-    # avgGhostScareTime = sum(ghostScareTimes) / len(ghostScareTimes)
-    # return currentGameState.getScore() + avgGhostScareTime * 100
     foodList = currentGameState.getFood().asList()
     pacmanPos = currentGameState.getPacmanPosition()
-    distToFood = [manhattanDistance(pacmanPos, food) for food in foodList]
-    if len(distToFood) == 0:
-        distToFood.append(0)
-    ghostPositions = currentGameState.getGhostPositions()
-    distToGhost = [manhattanDistance(pacmanPos, ghost) for ghost in ghostPositions]
-    if len(distToGhost) == 0:
-        distToGhost.append(0)
-    # scaring = [ghost.scaredTimer for ghost in currentGameState.getGhostStates()]
-    ghostScore = []
+
+    minDistToFood = min([manhattanDistance(pacmanPos, food) for food in foodList])
+    minDistToCapsule = min([manhattanDistance(pacmanPos, capsule) for capsule in currentGameState.getCapsules()])
+    sumDistToGhost = 0
+    sumDistToScaredGhost = 0
+
     for ghost in currentGameState.getGhostStates():
         dist = manhattanDistance(pacmanPos, ghost.getPosition())
         if ghost.scaredTimer == 0:
-            ghostScore.append(dist)
+            sumDistToGhost += dist
         else:
-            ghostScore.append(-dist)
-    return currentGameState.getScore() - (sum(distToFood) / len(distToFood)) - min(ghostScore)
-
+            sumDistToScaredGhost += dist
+    return currentGameState.getScore() - minDistToFood - sumDistToGhost + sumDistToScaredGhost - minDistToCapsule
 # Abbreviation
 better = betterEvaluationFunction
