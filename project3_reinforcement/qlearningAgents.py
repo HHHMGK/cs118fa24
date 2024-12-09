@@ -75,10 +75,9 @@ class QLearningAgent(ReinforcementAgent):
           you should return None.
         """
         legalActions = self.getLegalActions(state)
-        if len(legalActions) == 0:
-            return None
-        best_action = legalActions[0]
-        best_q_value = self.getQValue(state, best_action)
+        best_action = None
+        best_q_value = float('-inf')
+        # Find the best action a' in legalActions with maximum Q(state, a')
         for action in legalActions:
             q_value = self.getQValue(state, action)
             if q_value > best_q_value:
@@ -100,13 +99,11 @@ class QLearningAgent(ReinforcementAgent):
         legalActions = self.getLegalActions(state)
         if len(legalActions) == 0:
             return None
-        
         action = None
         if util.flipCoin(self.epsilon):
             action = random.choice(legalActions)
         else:
             action = self.computeActionFromQValues(state)
-
         return action
 
     def update(self, state, action, nextState, reward: float):
@@ -118,7 +115,10 @@ class QLearningAgent(ReinforcementAgent):
           it will be called on your behalf
         """
         q_sa = self.getQValue(state, action)
-        new_q_sa = (1 - self.alpha) * q_sa + self.alpha * (reward + self.discount * self.computeValueFromQValues(nextState))
+        sample_value = reward + self.discount * self.computeValueFromQValues(nextState)
+        new_q_sa = q_sa - self.alpha * (q_sa - sample_value) # average updating q_values with each new sample
+        # Alternative 
+        # new_q_sa = (1 - self.alpha) * q_sa + self.alpha * (reward + self.discount * self.computeValueFromQValues(nextState))
         self.q_values[(state, action)] = new_q_sa
 
     def getPolicy(self, state):

@@ -65,14 +65,14 @@ class ValueIterationAgent(ValueEstimationAgent):
           value iteration, V_k+1(...) depends on V_k(...)'s.
         """
         for _ in range(self.iterations):
-            v_k = util.Counter()
+            v_k = util.Counter()  
             for state in self.mdp.getStates():
-                if not self.mdp.isTerminal(state):
-                    v_k[state] = float('-inf')
+                if not self.mdp.isTerminal(state): # if state is Terminate, v_k = 0 by default
+                    v_k[state] = float('-inf')  
                 for action in self.mdp.getPossibleActions(state):
                     q_value = self.computeQValueFromValues(state, action)
                     v_k[state] = max(v_k[state], q_value)
-            self.values = v_k            
+            self.values = v_k # update values
 
     def getValue(self, state):
         """
