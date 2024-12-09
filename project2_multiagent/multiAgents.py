@@ -74,18 +74,32 @@ class ReflexAgent(Agent):
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
+        return successorGameState.getScore()
         "*** YOUR CODE HERE ***"
         foodList = successorGameState.getFood().asList()
         pacmanPos = successorGameState.getPacmanPosition()
         distToFood = [manhattanDistance(pacmanPos, food) for food in foodList]
-
+        
         if len(distToFood) == 0:
             distToFood.append(0)
         ghostPositions = successorGameState.getGhostPositions()
         distToGhost = [manhattanDistance(pacmanPos, ghost) for ghost in ghostPositions]
         if len(distToGhost) == 0:
             distToGhost.append(0)
-        return successorGameState.getScore() - 1/ (min(distToGhost)+1) + 1/ (min(distToFood)+1)
+        nearest_ghost_dis = 1e9
+        for ghost_state in newGhostStates:
+                ghost_x, ghost_y = ghost_state.getPosition()
+                ghost_x = int(ghost_x)
+                ghost_y = int(ghost_y)
+                if ghost_state.scaredTimer == 0:
+                    nearest_ghost_dis = min(nearest_ghost_dis,\
+                                            manhattanDistance((ghost_x, ghost_y), newPos))
+        nearest_food_dis = 1e9
+        for food in foodList:
+            nearest_food_dis = min(nearest_food_dis, manhattanDistance(food, newPos))
+        if not foodList:
+            nearest_food_dis = 0
+        return successorGameState.getScore() + min(distToGhost) - max(distToFood)
 
 
 def scoreEvaluationFunction(currentGameState: GameState):
@@ -156,28 +170,45 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 maxValue = actionValue
                 maxAction = action
         return maxAction
+
     def value(self, gameState: GameState, depth: int, agentIndex: int):
         if gameState.isWin() or gameState.isLose() or depth == self.depth:
             return self.evaluationFunction(gameState)
+        if agentIndex == gameState.getNumAgents():
+            agentIndex = 0
+            depth += 1
         if agentIndex == 0:
-            return self.maxValue(gameState, depth)
+            v = float("-inf")
+            for action in gameState.getLegalActions(0):
+                v = max(v, self.value(gameState.generateSuccessor(0, action), depth, 1))
         else:
-            return self.minValue(gameState, depth, agentIndex)
-
-    def maxValue(self, gameState: GameState, depth: int):
-        v = float("-inf")
-        for action in gameState.getLegalActions(0):
-            v = max(v, self.value(gameState.generateSuccessor(0, action), depth, 1))
-        return v
-
-    def minValue(self, gameState: GameState, depth: int, agentIndex: int):
-        v = float("inf")
-        for action in gameState.getLegalActions(agentIndex):
-            if agentIndex == gameState.getNumAgents() - 1:
-                v = min(v, self.value(gameState.generateSuccessor(agentIndex, action), depth + 1, 0))
-            else:
+            v = float("inf")
+            for action in gameState.getLegalActions(agentIndex):
                 v = min(v, self.value(gameState.generateSuccessor(agentIndex, action), depth, agentIndex + 1))
         return v
+
+    # def value(self, gameState: GameState, depth: int, agentIndex: int):
+    #     if gameState.isWin() or gameState.isLose() or depth == self.depth:
+    #         return self.evaluationFunction(gameState)
+    #     if agentIndex == 0:
+    #         return self.maxValue(gameState, depth)
+    #     else:
+    #         return self.minValue(gameState, depth, agentIndex)
+
+    # def maxValue(self, gameState: GameState, depth: int):
+    #     v = float("-inf")
+    #     for action in gameState.getLegalActions(0):
+    #         v = max(v, self.value(gameState.generateSuccessor(0, action), depth, 1))
+    #     return v
+
+    # def minValue(self, gameState: GameState, depth: int, agentIndex: int):
+    #     v = float("inf")
+    #     for action in gameState.getLegalActions(agentIndex):
+    #         if agentIndex == gameState.getNumAgents() - 1:
+    #             v = min(v, self.value(gameState.generateSuccessor(agentIndex, action), depth + 1, 0))
+    #         else:
+    #             v = min(v, self.value(gameState.generateSuccessor(agentIndex, action), depth, agentIndex + 1))
+    #     return v
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
