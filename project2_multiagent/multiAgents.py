@@ -191,32 +191,44 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             alpha = max(actionValue, alpha)
         return maxAction
 
-
+    # This function returns the value of the gameState
     def value(self, gameState: GameState, alpha: int, beta: int, depth: int, agentIndex: int):
+        # if the game is won or lost or the depth is reached return the value of the evaluation function for the gameState
         if gameState.isWin() or gameState.isLose() or depth == self.depth:
             return self.evaluationFunction(gameState)
-        if agentIndex == 0:
+        if agentIndex == 0: # if the agent is Pacman calculate the maximum value
             return self.maxValue(gameState, alpha, beta, depth)
-        else:
+        else: # if the agent is a ghost calculate the minimum value
             return self.minValue(gameState, alpha, beta, depth, agentIndex)
 
+    # This function returns the maximum value for Pacman
+    # It prunes branches where the value is greater than beta
     def maxValue(self, gameState: GameState, alpha: int, beta: int, depth: int):
-        v = float("-inf")
+        v = float("-inf") # initialize v to negative infinity
+        # for each action in legal actions of pacman
         for action in gameState.getLegalActions(0):
-            v = max(v, self.value(gameState.generateSuccessor(0, action), alpha, beta, depth, 1))
-            if v > beta:
+            # calculate the value of its child nodes
+            child_value = self.value(gameState.generateSuccessor(0, action), alpha, beta, depth, 1)
+            v = max(v, child_value)
+            if v > beta: # prune the tree if v is greater than beta
                 return v
             alpha = max(alpha, v)
         return v
 
+    # This function returns the minimum value for the ghosts
+    # It prunes branches where the value is less than alpha
     def minValue(self, gameState: GameState, alpha: int, beta: int, depth: int, agentIndex: int):
-        v = float("inf")
+        v = float("inf") # initialize v to positive infinity
+        # for each action in legal actions of the ghost
         for action in gameState.getLegalActions(agentIndex):
+            # if the agent is the last ghost, increment the depth and set the agentIndex to 0 (Pacman)
             if agentIndex == gameState.getNumAgents() - 1:
-                v = min(v, self.value(gameState.generateSuccessor(agentIndex, action), alpha, beta, depth + 1, 0))
-            else:
-                v = min(v, self.value(gameState.generateSuccessor(agentIndex, action), alpha, beta, depth, agentIndex + 1))
-            if v < alpha:
+                child_value = self.value(gameState.generateSuccessor(agentIndex, action), alpha, beta, depth + 1, 0)
+                v = min(v, child_value)
+            else: # else increment the agentIndex (next ghost)
+                child_value = self.value(gameState.generateSuccessor(agentIndex, action), alpha, beta, depth, agentIndex + 1)
+                v = min(v, child_value)
+            if v < alpha: # prune the tree if v is less than alpha
                 return v
             beta = min(v, beta)
         return v
@@ -256,20 +268,24 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         else:
             return self.expValue(gameState, depth, agentIndex)
 
+    # This function returns the maximum value from the child nodes of Pacman moves
     def maxValue(self, gameState: GameState, depth: int):
         v = float("-inf")
         for action in gameState.getLegalActions(0):
-            v = max(v, self.value(gameState.generateSuccessor(0, action), depth, 1))
+            child_value = self.value(gameState.generateSuccessor(0, action), depth, 1)
+            v = max(v, child_value)
         return v
 
+    # This function returns the expected (average) value from the child nodes of the ghost moves
     def expValue(self, gameState: GameState, depth: int, agentIndex: int):
-        v = 0
+        v = 0 # this variable will store the sum of the values of the child nodes
         for action in gameState.getLegalActions(agentIndex):
+            # if the agent is the last ghost, increment the depth and set the agentIndex to 0 (Pacman)
             if agentIndex == gameState.getNumAgents() - 1:
                 v += self.value(gameState.generateSuccessor(agentIndex, action), depth + 1, 0)
-            else:
+            else: # else increment the agentIndex (next ghost)
                 v += self.value(gameState.generateSuccessor(agentIndex, action), depth, agentIndex + 1)
-
+        # return the average value of the child nodes
         return v / len(gameState.getLegalActions(agentIndex))
 
 def betterEvaluationFunction(currentGameState: GameState):
