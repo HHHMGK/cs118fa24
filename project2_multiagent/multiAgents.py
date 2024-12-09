@@ -84,7 +84,7 @@ class ReflexAgent(Agent):
         distToGhost = [manhattanDistance(pacmanPos, ghost) for ghost in ghostPositions]
         if len(distToGhost) == 0:
             distToGhost.append(0)
-        return successorGameState.getScore() - 1/(min(distToGhost)+1) + 1/(min(distToFood)+1) 
+        return successorGameState.getScore() - 1/(sum(distToGhost)+1) + 1/(min(distToFood)+1) 
 
 
 def scoreEvaluationFunction(currentGameState: GameState):
@@ -309,17 +309,23 @@ def betterEvaluationFunction(currentGameState: GameState):
     foodList = currentGameState.getFood().asList()
     pacmanPos = currentGameState.getPacmanPosition()
 
-    minDistToFood = min([manhattanDistance(pacmanPos, food) for food in foodList])
-    minDistToCapsule = min([manhattanDistance(pacmanPos, capsule) for capsule in currentGameState.getCapsules()])
-    sumDistToGhost = 0
-    sumDistToScaredGhost = 0
+    minDistToFood = min([manhattanDistance(pacmanPos, food) for food in foodList], default=float('inf'))
+    minDistToCapsule = min([manhattanDistance(pacmanPos, capsule) for capsule in currentGameState.getCapsules()], default=float('inf'))
+    minDistToGhost = float('inf')
+    minDistToScaredGhost = float('inf')
 
     for ghost in currentGameState.getGhostStates():
         dist = manhattanDistance(pacmanPos, ghost.getPosition())
         if ghost.scaredTimer == 0:
-            sumDistToGhost += dist
+            if dist > 0:
+                minDistToGhost = min(minDistToGhost, dist)
+            else:
+                return float('-inf')
         else:
-            sumDistToScaredGhost += dist
-    return currentGameState.getScore() - minDistToFood - sumDistToGhost + sumDistToScaredGhost - minDistToCapsule
+            if dist > 0:
+                minDistToScaredGhost = min(minDistToScaredGhost, dist)
+
+    return currentGameState.getScore() + 1.0/minDistToFood + 1.0/minDistToCapsule - 1.0/minDistToGhost + 1.0/minDistToScaredGhost
+
 # Abbreviation
 better = betterEvaluationFunction
